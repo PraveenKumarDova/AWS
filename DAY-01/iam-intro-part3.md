@@ -1,0 +1,142 @@
+### IAM Policies in AWS
+
+### Types of IAM Policies
+
+### Custom IAM Policy:
+
+* Allow S3 access only for specific bucket or user ID
+* Deny S3 while allowing all other services
+
+---
+
+# IAM Policies in AWS
+
+## What is an IAM Policy?
+
+An IAM policy is a JSON document that defines permissions for an identity (IAM user, group, or role) or AWS resource. Policies control access by specifying:
+
+- **Effect**: `Allow` or `Deny`
+- **Action**: AWS service actions (e.g., `s3:PutObject`)
+- **Resource**: Which resource the action applies to
+- **Condition** (optional): Additional constraints (e.g., IP address, tag)
+
+---
+
+# Types of IAM Policies
+
+1. **Managed Policies (AWS Managed)**
+   - Predefined by AWS (e.g., `AmazonS3ReadOnlyAccess`)
+   - Easy to use but not customizable
+
+2. **Customer Managed Policies**
+   - Created by your organization
+   - Fully customizable
+
+3. **Inline Policies**
+   - Embedded directly into a specific IAM user, group, or role
+   - Tightly coupled with that identity
+
+---
+
+# Example 1: Custom Policy to Allow S3 Access to a Specific Bucket Only
+
+This policy allows access **only to a specific S3 bucket** and nothing else in S3.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowS3AccessToSpecificBucket",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::my-company-logs",
+        "arn:aws:s3:::my-company-logs/*"
+      ]
+    }
+  ]
+}
+````
+
+---
+
+# Example 2: Policy with Condition — Allow S3 Access Only for a Specific IAM User
+
+This policy allows access to `my-company-data` bucket **only if** the request is made by a specific user.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowS3ForSpecificUserOnly",
+      "Effect": "Allow",
+      "Action": [
+        "s3:*"
+      ],
+      "Resource": [
+        "arn:aws:s3:::my-company-data",
+        "arn:aws:s3:::my-company-data/*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:userid": "AIDAEXAMPLEID123456:user1"
+        }
+      }
+    }
+  ]
+}
+```
+
+To find the `aws:userid`, run this from the AWS CLI:
+
+```bash
+aws iam get-user --user-name user1
+```
+
+---
+
+# Example 3: Deny S3 Access, Allow All Other Services
+
+This is a **deny-first policy**, useful when you want to block S3 access explicitly even if other permissions allow it.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyS3Access",
+      "Effect": "Deny",
+      "Action": "s3:*",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+You can attach this as an **inline policy** to a user or group. Since explicit deny overrides allow, the user will be blocked from all S3 actions but can still access other services as permitted by other policies.
+
+---
+
+# Best Practices for IAM Policy Design
+
+* Always follow **least privilege**: grant only the permissions needed.
+* Use **managed policies** for simplicity, **custom policies** for control.
+* Add explicit **"Deny"** rules when enforcing critical restrictions (e.g., deny S3 for all users except backup job role).
+* Use **conditions** for fine-grained control (e.g., IP-based, MFA required).
+
+---
+
+# AWS Documentation Reference
+
+* [IAM JSON Policy Elements](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements.html)
+* [AWS Managed Policies](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_managed-vs-inline.html)
+* [Condition Keys](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html)
+
+```
+
